@@ -4,7 +4,7 @@ An async extension for Redux that keeps you functional
 
 ## Example
 
-Take a look at the [`example/src`](https://github.com/xaviervia/redux-walk/tree/master/example/src) folder for a very basic example. To try it out:
+Take a look at the [`example/src`](https://github.com/xaviervia/redux-walk/tree/master/example/src) folder for a very basic example. To try it out you can have it locally, or go to [xaviervia.github.io/redux-walk](http://xaviervia.github.io/redux-walk/)
 
 ```
 git clone git://github.com/xaviervia/redux-walk
