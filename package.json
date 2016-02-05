@@ -1,0 +1,26 @@
+{
+  "name": "redux-walk",
+  "version": "0.0.1",
+  "description": "An async extension for Redux that keeps you functional",
+  "main": "index.js",
+  "scripts": {
+    "test": "washington test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/xaviervia/redux-walk.git"
+  },
+  "keywords": [
+    "redux",
+    "async"
+  ],
+  "author": "Xavier Via <fernando.via@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/xaviervia/redux-walk/issues"
+  },
+  "homepage": "https://github.com/xaviervia/redux-walk#readme",
+  "devDependencies": {
+    "washington": "^0.12.0"
+  }
+}
