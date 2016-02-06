@@ -1,15 +1,16 @@
-module.exports = function (context) {
-  var dispatch = context.dispatch
+module.exports = function (rootWalk) {
+  return function (context) {
+    var dispatch = context.dispatch
+    var getState = context.getState
 
-  return function (next) {
-    return function (action) {
-      if (action.walk) {
-        action.walk.through(function (payload) {
-          dispatch(action.walk.to(payload))
-        })
+    return function (next) {
+      return function (action) {
+        var walk = rootWalk(getState(), action)
+
+        walk.through(function (payload) { dispatch(walk.to(payload)) })
+
+        next(action)
       }
-
-      next(action)
     }
   }
 }
