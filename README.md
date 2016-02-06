@@ -4,7 +4,7 @@ An async extension for Redux that keeps you functional
 
 ## Example
 
-Take a look at the [`example/src`](https://github.com/xaviervia/redux-walk/tree/master/example/src) folder for a very basic example. To try it out:
+Take a look at the [`example/src`](https://github.com/xaviervia/redux-walk/tree/master/example/src) folder for a very basic example. To try it out you can have it locally, or go to [xaviervia.github.io/redux-walk](http://xaviervia.github.io/redux-walk/)
 
 ```
 git clone git://github.com/xaviervia/redux-walk
@@ -20,58 +20,65 @@ npm start
 
 ## How
 
-The key concept is that of a Walk, which is essentially a function that receives a `done` callback which should be called when the asynchronous operation is completed, with the desired payload. In the example, the walk creator is:
+The key concept is that of a Walk, which is essentially a function that receives a `done` callback which should be called when the asynchronous operation is completed, with the desired payload. In the example, the root walk is:
 
 ```js
-export const callBackInX = function (numberOfMilliseconds) {
-  return function (done) {
-    setTimeout(() => done(numberOfMilliseconds / 1000), numberOfMilliseconds)
+import * as RandomActions from '../actions/random'
+
+export default function (state, { type, payload }) {
+  switch (type) {
+    case 'RANDOM_NUMBER_IN_RANDOM_TIME':
+      return {
+        through: (done) => setTimeout(() => done(payload / 1000), payload),
+        to: RandomActions.randomNumberInRandomTimeReceived
+      }
+  }
+
+  return {
+    through: () => {},
+    to: () => {}
   }
 }
 ```
 
-Let's say that you want to perform an asynchronous operation when the action `RANDOM_NUMBER_IN_RANDOM_TIME` is created. The Action object for the redux action is extended with a `walk` property that contains two references:
+Let's say that you want to perform an asynchronous operation when the action `RANDOM_NUMBER_IN_RANDOM_TIME` is created. The `redux-walk` middleware allows you to define a reducer-like structure for defining a _walk_ to be done from one action to the other, asynchronously. The Walk structure is composed of two functions:
 
-- `through`: the Walk function to be executed by the middleware
+- `through`: the function to be executed by the middleware with the `done` callback
 - `to`: the action creator to be run when the walk is complete, which the middleware will then dispatch
 
-Our actions (notice the `walk` property in the first action):
+Our actions are kept clean and vanilla. Nothing funky going on in here:
 
 ```js
-import { callBackInX } from '../walks/random'
-
 export const randomNumberInRandomTime = function () {
   const numberOfMilliseconds = Math.floor(Math.random() * 5000)
   return {
     type: 'RANDOM_NUMBER_IN_RANDOM_TIME',
-    payload: numberOfMilliseconds,
-    walk: {
-      through: callBackInX(numberOfMilliseconds),
-      to: randomNumberInRandomTimeReceived
-    }
+    payload: numberOfMilliseconds
   }
 }
 
-export const randomNumberInRandomTimeReceived = function (numberOfMilliseconds) {
+export const randomNumberInRandomTimeReceived = function (payload) {
   return {
     type: 'RANDOM_NUMBER_IN_RANDOM_TIME_RECEIVED',
-    payload: numberOfMilliseconds
+    payload
   }
 }
 ```
 
-That's it! Simple, huh? And as a result, the action creators (and the walks, unless you are doing something wrong) are just functions, which result can be tested with simplicity and consistency, just like regular synchronous functions would.
+That's it! Simple, huh? And as a result, both the action creators and the walks are just functions, which can be tested with simplicity and consistency, just like regular synchronous functions would.
 
 Don't forget to add the middleware to the store:
 
 ```js
-import walk from 'redux-walk'
+import createWalkMiddleware from 'redux-walk'
 
 import { createStore, applyMiddleware } from 'redux'
 import rootReducer from '../reducers'
+import rootWalk from '../walks'
 
 export default function configureStore () {
-  const createStoreWithMiddleware = applyMiddleware(walk, ...middlewares)(createStore)
+  const walkMiddleware(rootWalk)
+  const createStoreWithMiddleware = applyMiddleware(walkMiddleware, ...middlewares)(createStore)
 
   return createStoreWithMiddleware(rootReducer, {})
 }
@@ -79,7 +86,7 @@ export default function configureStore () {
 
 ## Further justification
 
-Besides the `walk` idiom, which can be safely ignored by the reducers, the Walk approach introduces no artifacts in your code:
+Besides the walks themselves, which do not affect anything outside them in the architecture, the Walk approach introduces no artifacts in your code:
 
 - No weird `status` properties like in [`redux-promise`](https://www.npmjs.com/package/redux-promise)
 - Actions are still actions, unlike in [`redux-thunk`](https://www.npmjs.com/package/redux-thunk)
@@ -87,7 +94,7 @@ Besides the `walk` idiom, which can be safely ignored by the reducers, the Walk 
 
 And the icing on the cake: you don't need to learn anything to use them! Walks are just pure functions, like reducers and action creators before them.
 
-And it's only 15 lines of trivial code. Seriously. You could just copy paste it into your `configureStore` file instead.
+And it's only 16 lines of trivial code. Seriously. You could just copy paste it into your `configureStore` file instead.
 
 ## License
 
