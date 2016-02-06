@@ -102,6 +102,15 @@ And the icing on the cake: you don't need to learn anything to use them! Walks a
 
 And it's only 16 lines of trivial code. Seriously. You could just copy paste it into your `configureStore` file instead.
 
+## Test
+
+```sh
+git clone git://github.com/xaviervia/redux-walk
+cd redux-walk
+npm install
+npm test
+```
+
 ## License
 
 Copyright 2016 Fernando Via Canel
