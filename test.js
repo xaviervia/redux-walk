@@ -2,7 +2,6 @@ var example = require('washington')
 var createWalkMiddleware = require('./index')
 
 var func = function () {}
-var emptyWalk = { through: func, to: func }
 
 example('@walk forwards the action', function (check) {
   var next = function next (action) { next.action = action }
@@ -11,9 +10,7 @@ example('@walk forwards the action', function (check) {
     payload: undefined
   }
 
-  var walkMiddleware = createWalkMiddleware(function () {
-    return emptyWalk
-  })
+  var walkMiddleware = createWalkMiddleware(function () {})
 
   walkMiddleware({
     dispatch: function () {},
@@ -28,7 +25,6 @@ example('rootWalk called with the state and the action', function (check) {
   var rootWalk = function rootWalk (state, action) {
     rootWalk.action = action
     rootWalk.state = state
-    return emptyWalk
   }
   var state = { the: 'state' }
   createWalkMiddleware(rootWalk)

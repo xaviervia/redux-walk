@@ -8,9 +8,4 @@ export default function (state, { type, payload }) {
         to: RandomActions.randomNumberInRandomTimeReceived
       }
   }
-
-  return {
-    through: () => {},
-    to: () => {}
-  }
 }
