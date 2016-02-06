@@ -26,12 +26,19 @@ npm start
 
 ## How
 
-The key concept is that of a Walk, which is essentially a function that receives a `done` callback which should be called when the asynchronous operation is completed, with the desired payload. In the example, the root walk is:
+The key concepts are:
+
+- The rootWalk, which is a function that receives the state and the action (just like a reducer) and returns a Walk
+- A Walk, which is an object with two keys:
+  - `through`, a function that receives a `done` callback to be called with the resulting payload when the operation is completed.
+  - `to`, an action creator which result the walk middleware will then dispatch
+
+Let's say that you want to perform an asynchronous operation when the action `RANDOM_NUMBER_IN_RANDOM_TIME` is created. This is how the rootWalk in the example looks like:
 
 ```js
 import * as RandomActions from '../actions/random'
 
-export default function (state, { type, payload }) {
+export default function rootWalk (state, { type, payload }) {
   switch (type) {
     case 'RANDOM_NUMBER_IN_RANDOM_TIME':
       return {
@@ -39,18 +46,8 @@ export default function (state, { type, payload }) {
         to: RandomActions.randomNumberInRandomTimeReceived
       }
   }
-
-  return {
-    through: () => {},
-    to: () => {}
-  }
 }
 ```
-
-Let's say that you want to perform an asynchronous operation when the action `RANDOM_NUMBER_IN_RANDOM_TIME` is created. The `redux-walk` middleware allows you to define a reducer-like structure for defining a _walk_ to be done from one action to the other, asynchronously. The Walk structure is composed of two functions:
-
-- `through`: the function to be executed by the middleware with the `done` callback
-- `to`: the action creator to be run when the walk is complete, which the middleware will then dispatch
 
 Our actions are kept clean and vanilla. Nothing funky going on in here:
 
@@ -83,7 +80,7 @@ import rootReducer from '../reducers'
 import rootWalk from '../walks'
 
 export default function configureStore () {
-  const walkMiddleware(rootWalk)
+  const walkMiddleware = createWalkMiddleware(rootWalk)
   const createStoreWithMiddleware = applyMiddleware(walkMiddleware, ...middlewares)(createStore)
 
   return createStoreWithMiddleware(rootReducer, {})
@@ -101,6 +98,15 @@ Besides the walks themselves, which do not affect anything outside them in the a
 And the icing on the cake: you don't need to learn anything to use them! Walks are just pure functions, like reducers and action creators before them.
 
 And it's only 16 lines of trivial code. Seriously. You could just copy paste it into your `configureStore` file instead.
+
+## Test
+
+```sh
+git clone git://github.com/xaviervia/redux-walk
+cd redux-walk
+npm install
+npm test
+```
 
 ## License
 
