@@ -7,7 +7,13 @@ module.exports = function (rootWalk) {
       return function (action) {
         var walk = rootWalk(getState(), action)
 
-        if (walk) walk.through(function (payload) { dispatch(walk.to(payload)) })
+        if (walk) {
+          if (walk.through) {
+            walk.through(function (payload) { dispatch(walk.to(payload)) })
+          } else {
+            dispatch(walk.to(action.payload))
+          }
+        }
 
         next(action)
       }

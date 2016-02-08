@@ -87,6 +87,10 @@ export default function configureStore () {
 }
 ```
 
+### Ignoring the `through` condition
+
+In case that you just want to use a walk to chain execution of actions, you can ignore the `through` property of the walk. The middleware will then dispatch the target action with the original payload.
+
 ## Further justification
 
 Besides the walks themselves, which do not affect anything outside them in the architecture, the Walk approach introduces no artifacts in your code:

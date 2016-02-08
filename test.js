@@ -53,45 +53,17 @@ example('rootWalk return used to dispatch the walk result', function (check) {
   check(dispatch.result, payload)
 })
 
-// example('@walk action dispatches the result of the walk', function (check) {
-//   var payload = { the: 'payload' }
-//   var through = function (callback) { callback(payload) }
-//   var to = function (payload) { re }
-//   var rootWalk = function rootWalk (action) {
-//     rootWalk.action = action
-//
-//     return {
-//       through: function (callback) { callback(payload) },
-//       to: function (payload) { return payload }
-//     }
-//   }
-//   var walkMiddleware = createWalkMiddleware(function () {
-//     return {
-//       through: through,
-//       to:
-//     }
-//   })
-//   // var next = function () {}
-//   // var theResult = { key: 'value' }
-//   // var mainWalk = function (callback) {
-//   //   setTimeout(function () {
-//   //     callback(theResult)
-//   //   })
-//   // }
-//   // var mainCompleted = function mainCompleted (result) {
-//   //   return result
-//   // }
-//   // var mainAction = {
-//   //   type: 'MAIN',
-//   //   payload: undefined,
-//   //   walk: {
-//   //     through: mainWalk,
-//   //     to: mainCompleted
-//   //   }
-//   // }
-//   // var dispatch = function dispatch (result) {
-//   //   check(theResult, result)
-//   // }
-//   //
-//   // walk({ dispatch: dispatch })(next)(mainAction)
-// })
+example('if no through function, dispatches the target with the payload directly', function (check) {
+  var payload = { the: 'payload' }
+  var walk = {
+    to: function (result) { return result }
+  }
+  var walkMiddleware = createWalkMiddleware(function () { return walk })
+  var dispatch = function dispatch (result) { dispatch.result = result }
+  walkMiddleware({
+    dispatch: dispatch,
+    getState: func
+  })(func)({ type: 'SOME_ACTION', payload: payload })
+
+  check(dispatch.result, payload)
+})
