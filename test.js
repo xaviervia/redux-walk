@@ -1,69 +1,165 @@
 var example = require('washington')
 var createWalkMiddleware = require('./index')
 
-var func = function () {}
+function func () {}
+function stub () { return function f (x) { f.payload = x } }
+function identity (x) { return function () { return x } }
+function pipe () { return function (x) { return x } }
+function dispatcher (f) { return { dispatch: f } }
+function selfResolve (x) { return function (ok) { ok(x) } }
+function selfResolvePromise (x) { return new Promise(function (ok) { ok(x) }) }
+function selfReject (x) { return function (_, no) { no(x) } }
+function selfRejectPromise (x) { return new Promise(function (_, no) { no(x) }) }
+function someAction () { return { type: 'SOME_ACTION' } }
+function withPromise (a) {
+  return function (p) { return Object.assign({}, a, { meta: { promise: p } }) }
+}
+function withPayload (a) {
+  return function (p) { return Object.assign({}, a, { payload: p }) }
+}
 
-example('@walk forwards the action', function (check) {
-  var next = function next (action) { next.action = action }
-  var action = {
-    type: 'SOME_ACTION',
-    payload: undefined
-  }
+example('it forwards the action', function (check) {
+  var next = stub()
+  var action = someAction()
 
-  var walkMiddleware = createWalkMiddleware(function () {})
+  createWalkMiddleware(func)(dispatcher())(next)(action)
 
-  walkMiddleware({
-    dispatch: function () {},
-    getState: function () {}
-  })(next)(action)
-
-  check(next.action, action)
+  check(next.payload, action)
 })
 
-example('rootWalk called with the state and the action', function (check) {
-  var action = { type: 'SOME_ACTION' }
-  var rootWalk = function rootWalk (state, action) {
-    rootWalk.action = action
-    rootWalk.state = state
-  }
-  var state = { the: 'state' }
-  createWalkMiddleware(rootWalk)
-    ({ dispatch: func, getState: function () { return state } })(func)(action)
+example('walk @creator called with the action', function (check) {
+  var walkCreator = stub()
+  var action = someAction()
 
-  check(
-    rootWalk.action === action &&
-    rootWalk.state === state
-  )
+  createWalkMiddleware(walkCreator)(dispatcher())(func)(action)
+
+  check(walkCreator.payload, action)
 })
 
-example('rootWalk return used to dispatch the walk result', function (check) {
-  var payload = { the: 'payload' }
-  var walk = {
-    through: function (callback) { callback(payload) },
-    to: function (result) { return result }
+example('@direct if object instead of callback, throws an exception', function (check) {
+  try {
+    createWalkMiddleware(identity({}))(dispatcher())(func)(someAction())
+  } catch (error) {
+    check(error.message, 'Expected function as target in walk for action \'SOME_ACTION\'')
   }
-  var rootWalk = function () { return walk }
-  var walkMiddleware = createWalkMiddleware(rootWalk)
-  var dispatch = function dispatch (result) { dispatch.result = result }
-  walkMiddleware({
-    dispatch: dispatch,
-    getState: func
-  })(func)({ type: 'SOME_ACTION' })
-
-  check(dispatch.result, payload)
 })
 
-example('if no through function, dispatches the target with the payload directly', function (check) {
-  var payload = { the: 'payload' }
-  var walk = {
-    to: function (result) { return result }
-  }
-  var walkMiddleware = createWalkMiddleware(function () { return walk })
-  var dispatch = function dispatch (result) { dispatch.result = result }
-  walkMiddleware({
-    dispatch: dispatch,
-    getState: func
-  })(func)({ type: 'SOME_ACTION', payload: payload })
+example('@direct dispatches the action with the payload', function (check) {
+  var action = withPayload(someAction())({ key: 'value' })
+  var dispatch = stub()
+  createWalkMiddleware(identity(pipe()))(dispatcher(dispatch))(func)(action)
 
-  check(dispatch.result, payload)
+  check(dispatch.payload, action.payload)
+})
+
+example('@promise if not walk, throws an exception', function (check) {
+  var action = withPromise(someAction())({})
+
+  try {
+    createWalkMiddleware(func)(dispatcher())(func)(action)
+  } catch (error) {
+    check(error.message, 'Found promise in \'SOME_ACTION\' but there is no walk for it')
+  }
+})
+
+example('@promise if it has no `resolve` or `reject`, throws an exception', function (check) {
+  var action = withPromise(someAction())({})
+
+  try {
+    createWalkMiddleware(identity({}))(dispatcher())(func)(action)
+  } catch (error) {
+    check(error.message, 'The walk for \'SOME_ACTION\' needs to have a `resolve` or/and `reject` callback when there is a promise in it')
+  }
+})
+
+example('@promise @function if only one callback, it dispatches when resolved with payload', function (check) {
+  var payload = { key: 'value' }
+  var action = withPromise(someAction())(selfResolve(payload))
+  var dispatch = stub()
+
+  createWalkMiddleware(identity(pipe()))(dispatcher(dispatch))(func)(action)
+
+  check(dispatch.payload, payload)
+})
+
+example('@promise @object if only one callback, it dispatches when resolved with payload', function (check) {
+  var payload = { key: 'value' }
+  var action = withPromise(someAction())(selfResolvePromise(payload))
+  var dispatch = stub()
+
+  createWalkMiddleware(identity(pipe()))(dispatcher(dispatch))(func)(action)
+
+  setTimeout(function () {
+    check(dispatch.payload, payload)
+  })
+})
+
+example('@promise @function if only one callback, it dispatches when rejected with payload', function (check) {
+  var payload = { key: 'value' }
+  var action = withPromise(someAction())(selfReject(payload))
+  var dispatch = stub()
+
+  createWalkMiddleware(identity(pipe()))(dispatcher(dispatch))(func)(action)
+
+  check(dispatch.payload, payload)
+})
+
+example('@promise @object if only one callback, it dispatches when rejected with payload', function (check) {
+  var payload = { key: 'value' }
+  var action = withPromise(someAction())(selfRejectPromise(payload))
+  var dispatch = stub()
+
+  createWalkMiddleware(identity(pipe()))(dispatcher(dispatch))(func)(action)
+
+  setTimeout(function () {
+    check(dispatch.payload, payload)
+  })
+})
+
+example('@promise @function if `resolve` callback, it dispatches when resolved with payload', function (check) {
+  var payload = { key: 'value' }
+  var action = withPromise(someAction())(selfResolve(payload))
+  var dispatch = stub()
+
+  createWalkMiddleware(identity({ resolve: pipe() }))
+    (dispatcher(dispatch))(func)(action)
+
+  check(dispatch.payload, payload)
+})
+
+example('@promise @object if resolved callback, it dispatches when resolved with payload', function (check) {
+  var payload = { key: 'value' }
+  var action = withPromise(someAction())(selfResolvePromise(payload))
+  var dispatch = stub()
+
+  createWalkMiddleware(identity({ resolve: pipe() }))
+    (dispatcher(dispatch))(func)(action)
+
+  setTimeout(function () {
+    check(dispatch.payload, payload)
+  })
+})
+
+example('@promise @function if rejected callback, it dispatches when rejected with payload', function (check) {
+  var payload = { key: 'value' }
+  var action = withPromise(someAction())(selfReject(payload))
+  var dispatch = stub()
+
+  createWalkMiddleware(identity({ reject: pipe() }))
+    (dispatcher(dispatch))(func)(action)
+
+  check(dispatch.payload, payload)
+})
+
+example('@promise @object if rejected callback, it dispatches when rejected with payload', function (check) {
+  var payload = { key: 'value' }
+  var action = withPromise(someAction())(selfRejectPromise(payload))
+  var dispatch = stub()
+
+  createWalkMiddleware(identity({ reject: pipe() }))
+    (dispatcher(dispatch))(func)(action)
+
+  setTimeout(function () {
+    check(dispatch.payload, payload)
+  })
 })
