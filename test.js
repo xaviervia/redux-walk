@@ -7,9 +7,7 @@ function identity (x) { return function () { return x } }
 function pipe () { return function (x) { return x } }
 function dispatcher (f) { return { dispatch: f } }
 function selfResolve (x) { return function (ok) { ok(x) } }
-function selfResolvePromise (x) { return new Promise(function (ok) { ok(x) }) }
 function selfReject (x) { return function (_, no) { no(x) } }
-function selfRejectPromise (x) { return new Promise(function (_, no) { no(x) }) }
 function someAction () { return { type: 'SOME_ACTION' } }
 function withPromise (a) {
   return function (p) { return Object.assign({}, a, { meta: { promise: p } }) }
@@ -52,7 +50,7 @@ example('@direct dispatches the action with the payload', function (check) {
   check(dispatch.payload, action.payload)
 })
 
-example('@promise if not walk, throws an exception', function (check) {
+example('@promise if there is no walk, throws an exception', function (check) {
   var action = withPromise(someAction())({})
 
   try {
@@ -62,17 +60,17 @@ example('@promise if not walk, throws an exception', function (check) {
   }
 })
 
-example('@promise if it has no `resolve` or `reject`, throws an exception', function (check) {
+example('@promise if walk is not function and has no `resolve` or `reject`, throws an exception', function (check) {
   var action = withPromise(someAction())({})
 
   try {
     createWalkMiddleware(identity({}))(dispatcher())(func)(action)
   } catch (error) {
-    check(error.message, 'The walk for \'SOME_ACTION\' needs to have a `resolve` or/and `reject` callback when there is a promise in it')
+    check(error.message, 'The walk for \'SOME_ACTION\' needs to be a callback, or to have a `resolve` or/and `reject` callback when there is a promise in it')
   }
 })
 
-example('@promise @function if only one callback, it dispatches when resolved with payload', function (check) {
+example('@promise @function if walk is callback, it dispatches when resolved with payload', function (check) {
   var payload = { key: 'value' }
   var action = withPromise(someAction())(selfResolve(payload))
   var dispatch = stub()
@@ -82,9 +80,9 @@ example('@promise @function if only one callback, it dispatches when resolved wi
   check(dispatch.payload, payload)
 })
 
-example('@promise @object if only one callback, it dispatches when resolved with payload', function (check) {
+example('@promise @object if walk is callback, it dispatches when resolved with payload', function (check) {
   var payload = { key: 'value' }
-  var action = withPromise(someAction())(selfResolvePromise(payload))
+  var action = withPromise(someAction())(new Promise(selfResolve(payload)))
   var dispatch = stub()
 
   createWalkMiddleware(identity(pipe()))(dispatcher(dispatch))(func)(action)
@@ -94,7 +92,7 @@ example('@promise @object if only one callback, it dispatches when resolved with
   })
 })
 
-example('@promise @function if only one callback, it dispatches when rejected with payload', function (check) {
+example('@promise @function if walk is callback, it dispatches when rejected with payload', function (check) {
   var payload = { key: 'value' }
   var action = withPromise(someAction())(selfReject(payload))
   var dispatch = stub()
@@ -104,9 +102,9 @@ example('@promise @function if only one callback, it dispatches when rejected wi
   check(dispatch.payload, payload)
 })
 
-example('@promise @object if only one callback, it dispatches when rejected with payload', function (check) {
+example('@promise @object if walk is callback, it dispatches when rejected with payload', function (check) {
   var payload = { key: 'value' }
-  var action = withPromise(someAction())(selfRejectPromise(payload))
+  var action = withPromise(someAction())(new Promise(selfReject(payload)))
   var dispatch = stub()
 
   createWalkMiddleware(identity(pipe()))(dispatcher(dispatch))(func)(action)
@@ -127,9 +125,9 @@ example('@promise @function if `resolve` callback, it dispatches when resolved w
   check(dispatch.payload, payload)
 })
 
-example('@promise @object if resolved callback, it dispatches when resolved with payload', function (check) {
+example('@promise @object if `resolve` callback, it dispatches when resolved with payload', function (check) {
   var payload = { key: 'value' }
-  var action = withPromise(someAction())(selfResolvePromise(payload))
+  var action = withPromise(someAction())(new Promise(selfResolve(payload)))
   var dispatch = stub()
 
   createWalkMiddleware(identity({ resolve: pipe() }))
@@ -140,7 +138,7 @@ example('@promise @object if resolved callback, it dispatches when resolved with
   })
 })
 
-example('@promise @function if rejected callback, it dispatches when rejected with payload', function (check) {
+example('@promise @function if `reject` callback, it dispatches when rejected with payload', function (check) {
   var payload = { key: 'value' }
   var action = withPromise(someAction())(selfReject(payload))
   var dispatch = stub()
@@ -151,9 +149,9 @@ example('@promise @function if rejected callback, it dispatches when rejected wi
   check(dispatch.payload, payload)
 })
 
-example('@promise @object if rejected callback, it dispatches when rejected with payload', function (check) {
+example('@promise @object if `reject` callback, it dispatches when rejected with payload', function (check) {
   var payload = { key: 'value' }
-  var action = withPromise(someAction())(selfRejectPromise(payload))
+  var action = withPromise(someAction())(new Promise(selfReject(payload)))
   var dispatch = stub()
 
   createWalkMiddleware(identity({ reject: pipe() }))
