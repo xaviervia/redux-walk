@@ -7,7 +7,9 @@ export default function walkCreator ({ type, payload }) {
       return RandomActions.randomNumberInRandomTimeReceived
 
     case 'RANDOM_NUMBER_IN_RANDOM_TIME_RECEIVED':
-      return CongratulationsActions.congratulationsShow
+      if (payload < 2000) {
+        return CongratulationsActions.congratulationsShow
+      }
 
     case 'RANDOM_HALF_TIMES_IT_WORKS':
       return {
