@@ -1,5 +1,8 @@
 # redux-walk
 
+[![Travis CI build
+status](https://api.travis-ci.org/xaviervia/redux-walk.svg)](https://travis-ci.org/xaviervia/redux-walk)
+
 An async extension for Redux that keeps you functional
 
 ## Install
