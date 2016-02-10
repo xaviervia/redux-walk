@@ -6,7 +6,7 @@ import setupWalkMiddleware from 'redux-walk'
 
 export default function configureStore () {
   const logger = createLogger()
-  const walkMiddleware = setupWalkMiddleware(rootWalk)
+  const walkMiddleware = setupWalkMiddleware(walkCreator)
   const createStoreWithMiddleware = applyMiddleware(walkMiddleware, logger)(createStore)
   const store = createStoreWithMiddleware(rootReducer, {})
 

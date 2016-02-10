@@ -1,7 +1,7 @@
 import * as RandomActions from '../actions/random'
 import * as CongratulationsActions from '../actions/congratulations'
 
-export default function walkCreator (result, { type, payload }) {
+export default function walkCreator ({ type, payload }) {
   switch (type) {
     case 'RANDOM_NUMBER_IN_RANDOM_TIME':
       return RandomActions.randomNumberInRandomTimeReceived

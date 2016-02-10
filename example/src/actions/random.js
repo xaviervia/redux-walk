@@ -10,8 +10,10 @@ export const randomNumberInRandomTime = () => {
 }
 
 export const randomNumberInRandomTimeReceived = (numberOfMilliseconds) => {
-  type: 'RANDOM_NUMBER_IN_RANDOM_TIME_RECEIVED',
-  payload: numberOfMilliseconds
+  return {
+    type: 'RANDOM_NUMBER_IN_RANDOM_TIME_RECEIVED',
+    payload: numberOfMilliseconds
+  }
 }
 
 export const randomHalfTimesItWorks = () => {
@@ -31,6 +33,6 @@ export const randomHalfTimesItWorks = () => {
   }
 }
 
-export const randomHalfTimesItWorksSuccess = () => { type: 'RANDOM_HALF_TIMES_IT_WORKS_SUCCESS' }
+export const randomHalfTimesItWorksSuccess = () => { return { type: 'RANDOM_HALF_TIMES_IT_WORKS_SUCCESS' } }
 
-export const randomHalfTimesItWorksFailure = () => { type: 'RANDOM_HALF_TIMES_IT_WORKS_FAILURE' }
+export const randomHalfTimesItWorksFailure = () => { return { type: 'RANDOM_HALF_TIMES_IT_WORKS_FAILURE' } }
