@@ -1,6 +1,6 @@
 import { createStore, applyMiddleware } from 'redux'
 import rootReducer from '../reducers'
-import rootWalk from '../walks'
+import walkCreator from '../walks'
 import createLogger from 'redux-logger'
 import setupWalkMiddleware from 'redux-walk'
 

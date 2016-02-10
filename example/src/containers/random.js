@@ -5,7 +5,7 @@ import * as RandomActions from '../actions/random'
 
 class App extends Component {
   render () {
-    const { actions, isWaiting, number } = this.props
+    const { actions, isWaiting, number, congratulations } = this.props
     return (
       <div>
         <button onClick={actions.randomNumberInRandomTime}>
@@ -17,6 +17,10 @@ class App extends Component {
             ? <p>Waiting for result</p>
             : <p>Completed in {number}s</p>
         }
+
+        <p>{ congratulations }</p>
+
+        <button onClick={actions.randomHalfTimesItWorks}>Try your luck</button>
       </div>
     )
   }
@@ -25,11 +29,12 @@ class App extends Component {
 App.propTypes = {
   actions: PropTypes.object.isRequired,
   isWaiting: PropTypes.bool,
-  number: PropTypes.number
+  number: PropTypes.number,
+  congratulations: PropTypes.string
 }
 
-function mapStateToProps (state) {
-  return { ...state.random }
+function mapStateToProps ({ congratulations, random}) {
+  return { ...random, congratulations }
 }
 
 function mapDispatchToProps (dispatch) {
