@@ -10,6 +10,7 @@ export default function walkCreator ({ type, payload }) {
       if (payload < 2000) {
         return CongratulationsActions.congratulationsShow
       }
+      break
 
     case 'RANDOM_HALF_TIMES_IT_WORKS':
       return {
