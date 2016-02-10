@@ -14,12 +14,16 @@ module.exports = function (walkCreator) {
           var reject = dispatchWith(walk.reject)
 
           if (typeof action.meta.promise === 'function') {
-            action.meta.promise(resolve, reject)
+            setTimeout(function () {
+              action.meta.promise(resolve, reject)
+            })
           } else {
             action.meta.promise.then(resolve).catch(reject)
           }
         } else if (walk) {
-          dispatchWith()(action.payload)
+          setTimeout(function () {
+            dispatchWith()(action.payload)
+          })
         }
 
         next(action)
