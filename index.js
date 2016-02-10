@@ -1,22 +1,75 @@
-module.exports = function (rootWalk) {
+module.exports = function (walkCreator) {
   return function (context) {
     var dispatch = context.dispatch
-    var getState = context.getState
 
     return function (next) {
       return function (action) {
-        var walk = rootWalk(getState(), action)
+        var walk = walkCreator(action)
+        var dispatchWith = dispatcher(dispatch)(walk)
 
-        if (walk) {
-          if (walk.through) {
-            walk.through(function (payload) { dispatch(walk.to(payload)) })
+        findError(walk, action)(action.type)
+
+        if (action.meta && action.meta.promise) {
+          var resolve = dispatchWith(walk.resolve)
+          var reject = dispatchWith(walk.reject)
+
+          if (typeof action.meta.promise === 'function') {
+            action.meta.promise(resolve, reject)
           } else {
-            dispatch(walk.to(action.payload))
+            action.meta.promise.then(resolve).catch(reject)
           }
+        } else if (walk) {
+          dispatchWith()(action.payload)
         }
 
         next(action)
       }
+    }
+  }
+}
+
+var error = {
+  promise: {
+    noWalk: function (type) {
+      throw new Error('Found promise in \'' + type + '\' but there is no walk for it')
+    },
+    missingCallback: function (type) {
+      throw new Error('The walk for \'' + type + '\' needs to be a callback, or to have a `resolve` or/and `reject` callback when there is a promise in it')
+    }
+  },
+  direct: {
+    walkIsNotFunction: function (type) {
+      throw new Error('Expected function as target in walk for action \'' + type + '\'')
+    }
+  }
+}
+
+function findError (walk, action) {
+  if (action.meta && action.meta.promise) {
+    if (!walk) {
+      return error.promise.noWalk
+    }
+
+    if (typeof walk !== 'function' && walk.resolve == null && walk.reject == null) {
+      return error.promise.missingCallback
+    }
+  } else if (walk && typeof walk !== 'function') {
+    return error.direct.walkIsNotFunction
+  }
+
+  return function () {}
+}
+
+function dispatcher (dispatch) {
+  return function (walk) {
+    var fallbackWalk = typeof walk === 'function'
+      ? function (payload) { dispatch(walk(payload)) }
+      : function () {}
+
+    return function (preferredWalk) {
+      return typeof preferredWalk === 'function'
+        ? function (payload) { dispatch(preferredWalk(payload)) }
+        : fallbackWalk
     }
   }
 }
