@@ -1,6 +1,6 @@
 {
   "name": "redux-walk",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "An async extension for Redux that keeps you functional",
   "main": "index.js",
   "scripts": {
