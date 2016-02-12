@@ -18,7 +18,7 @@ module.exports = function (walkCreator) {
               action.meta.promise(resolve, reject)
             })
           } else {
-            action.meta.promise.then(resolve).catch(reject)
+            action.meta.promise.then(resolve)['catch'](reject)
           }
         } else if (walk) {
           setTimeout(function () {
