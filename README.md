@@ -3,7 +3,7 @@
 [![Travis CI build
 status](https://api.travis-ci.org/xaviervia/redux-walk.svg)](https://travis-ci.org/xaviervia/redux-walk)
 
-An async extension for Redux that keeps you functional
+A control-flow extension for Redux that keeps you functional
 
 ## Install
 
@@ -46,17 +46,15 @@ export const randomNumberInRandomTime = function () {
     type: 'RANDOM_NUMBER_IN_RANDOM_TIME',
     payload: numberOfMilliseconds,
     meta: {
-      promise: (resolve, reject) => setTimeout(() => resolve(numberOfMilliseconds), numberOfMilliseconds)
+      walk: (resolve, reject) => setTimeout(() => resolve(numberOfMilliseconds), numberOfMilliseconds)
     }
   }
 }
 
-export const randomNumberInRandomTimeReceived = function (payload) {
-  return {
-    type: 'RANDOM_NUMBER_IN_RANDOM_TIME_RECEIVED',
-    payload
-  }
-}
+export const randomNumberInRandomTimeReceived = (payload) => ({
+  type: 'RANDOM_NUMBER_IN_RANDOM_TIME_RECEIVED',
+  payload
+})
 ```
 
 Then we need to specify a walk for the `RANDOM_NUMBER_IN_RANDOM_TIME` action. The walk should provide an action creator to be called when the promise is resolved. This is how the walk creator in the example looks like:
@@ -144,7 +142,7 @@ export const randomHalfTimesItWorks = () => {
   return {
     type: 'RANDOM_HALF_TIMES_IT_WORKS',
     meta: {
-      promise: new Promise((resolve, reject) => {
+      walk: new Promise((resolve, reject) => {
         setTimeout(() => {
           if (Math.random() > 0.5) {
             resolve()
@@ -163,7 +161,7 @@ export const randomHalfTimesItWorks = () => {
 Besides the walks themselves and the `meta.promise` idiom in the action, which do not affect anything outside them in the architecture, the Walk approach introduces no artifacts in your code:
 
 - No weird `status` properties like in [`redux-promise`](https://www.npmjs.com/package/redux-promise).
-- Actions are still actions, unlike in [`redux-thunk`](https://www.npmjs.com/package/redux-thunk).
+- Actions creators are still returning actions, unlike in [`redux-thunk`](https://www.npmjs.com/package/redux-thunk).
 - It's super flexible. Plug whatever you want in the promise.
 
 And the icing on the cake: you don't need to learn anything to use them! Walk creators are just pure functions, like reducers and action creators before them.
