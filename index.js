@@ -15,7 +15,13 @@ module.exports = function (walkCreator) {
 
           if (typeof action.meta.walk === 'function') {
             setTimeout(function () {
-              action.meta.walk(resolve, reject)
+              action.meta.walk(function (error, result) {
+                if (error != null) {
+                  return reject(error)
+                }
+
+                resolve(result)
+              })
             })
           } else {
             action.meta.walk.then(resolve)['catch'](reject)

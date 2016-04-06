@@ -6,7 +6,9 @@ function stub () { return function f (x) { f.payload = x } }
 function identity (x) { return function () { return x } }
 function pipe () { return function (x) { return x } }
 function dispatcher (f) { return { dispatch: f } }
+function callbackResolve (x) { return function (ok) { ok(undefined, x) } }
 function selfResolve (x) { return function (ok) { ok(x) } }
+function callbackReject (x) { return function (no) { no(x) } }
 function selfReject (x) { return function (_, no) { no(x) } }
 function someAction () { return { type: 'SOME_ACTION' } }
 function withPromise (a) {
@@ -77,7 +79,7 @@ example('@walk if walk is not function and has no `resolve` or `reject`, throws 
 
 example('@walk @function if walk is callback, dispatches next tick if resolved with payload', function (check) {
   var payload = { key: 'value' }
-  var action = withPromise(someAction())(selfResolve(payload))
+  var action = withPromise(someAction())(callbackResolve(payload))
   var dispatch = stub()
 
   createWalkMiddleware(identity(pipe()))(dispatcher(dispatch))(func)(action)
@@ -105,7 +107,7 @@ example('@walk @object if walk is callback, dispatches next tick if resolved wit
 
 example('@walk @function if walk is callback, dispatches next tick if rejected with payload', function (check) {
   var payload = { key: 'value' }
-  var action = withPromise(someAction())(selfReject(payload))
+  var action = withPromise(someAction())(callbackReject(payload))
   var dispatch = stub()
 
   createWalkMiddleware(identity(pipe()))(dispatcher(dispatch))(func)(action)
@@ -133,7 +135,7 @@ example('@walk @object if walk is callback, dispatches next tick if rejected wit
 
 example('@walk @function if `resolve` callback, dispatches next tick if resolved with payload', function (check) {
   var payload = { key: 'value' }
-  var action = withPromise(someAction())(selfResolve(payload))
+  var action = withPromise(someAction())(callbackResolve(payload))
   var dispatch = stub()
 
   createWalkMiddleware(identity({ resolve: pipe() }))
@@ -163,7 +165,7 @@ example('@walk @object if `resolve` callback, dispatches next tick if resolved w
 
 example('@walk @function if `reject` callback, dispatches next tick if rejected with payload', function (check) {
   var payload = { key: 'value' }
-  var action = withPromise(someAction())(selfReject(payload))
+  var action = withPromise(someAction())(callbackReject(payload))
   var dispatch = stub()
 
   createWalkMiddleware(identity({ reject: pipe() }))
