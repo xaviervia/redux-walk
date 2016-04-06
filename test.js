@@ -10,7 +10,7 @@ function selfResolve (x) { return function (ok) { ok(x) } }
 function selfReject (x) { return function (_, no) { no(x) } }
 function someAction () { return { type: 'SOME_ACTION' } }
 function withPromise (a) {
-  return function (p) { return Object.assign({}, a, { meta: { promise: p } }) }
+  return function (p) { return Object.assign({}, a, { meta: { walk: p } }) }
 }
 function withPayload (a) {
   return function (p) { return Object.assign({}, a, { payload: p }) }
@@ -55,7 +55,7 @@ example('@direct dispatches the action with the payload', function (check) {
   })
 })
 
-example('@promise if there is no walk, throws an exception', function (check) {
+example('@walk if there is no walk, throws an exception', function (check) {
   var action = withPromise(someAction())({})
 
   try {
@@ -65,7 +65,7 @@ example('@promise if there is no walk, throws an exception', function (check) {
   }
 })
 
-example('@promise if walk is not function and has no `resolve` or `reject`, throws an exception', function (check) {
+example('@walk if walk is not function and has no `resolve` or `reject`, throws an exception', function (check) {
   var action = withPromise(someAction())({})
 
   try {
@@ -75,7 +75,7 @@ example('@promise if walk is not function and has no `resolve` or `reject`, thro
   }
 })
 
-example('@promise @function if walk is callback, dispatches next tick if resolved with payload', function (check) {
+example('@walk @function if walk is callback, dispatches next tick if resolved with payload', function (check) {
   var payload = { key: 'value' }
   var action = withPromise(someAction())(selfResolve(payload))
   var dispatch = stub()
@@ -89,7 +89,7 @@ example('@promise @function if walk is callback, dispatches next tick if resolve
   })
 })
 
-example('@promise @object if walk is callback, dispatches next tick if resolved with payload', function (check) {
+example('@walk @object if walk is callback, dispatches next tick if resolved with payload', function (check) {
   var payload = { key: 'value' }
   var action = withPromise(someAction())(new Promise(selfResolve(payload)))
   var dispatch = stub()
@@ -103,7 +103,7 @@ example('@promise @object if walk is callback, dispatches next tick if resolved 
   })
 })
 
-example('@promise @function if walk is callback, dispatches next tick if rejected with payload', function (check) {
+example('@walk @function if walk is callback, dispatches next tick if rejected with payload', function (check) {
   var payload = { key: 'value' }
   var action = withPromise(someAction())(selfReject(payload))
   var dispatch = stub()
@@ -117,7 +117,7 @@ setTimeout(function () {
 })
 })
 
-example('@promise @object if walk is callback, dispatches next tick if rejected with payload', function (check) {
+example('@walk @object if walk is callback, dispatches next tick if rejected with payload', function (check) {
   var payload = { key: 'value' }
   var action = withPromise(someAction())(new Promise(selfReject(payload)))
   var dispatch = stub()
@@ -131,7 +131,7 @@ example('@promise @object if walk is callback, dispatches next tick if rejected 
   })
 })
 
-example('@promise @function if `resolve` callback, dispatches next tick if resolved with payload', function (check) {
+example('@walk @function if `resolve` callback, dispatches next tick if resolved with payload', function (check) {
   var payload = { key: 'value' }
   var action = withPromise(someAction())(selfResolve(payload))
   var dispatch = stub()
@@ -146,7 +146,7 @@ example('@promise @function if `resolve` callback, dispatches next tick if resol
   })
 })
 
-example('@promise @object if `resolve` callback, dispatches next tick if resolved with payload', function (check) {
+example('@walk @object if `resolve` callback, dispatches next tick if resolved with payload', function (check) {
   var payload = { key: 'value' }
   var action = withPromise(someAction())(new Promise(selfResolve(payload)))
   var dispatch = stub()
@@ -161,7 +161,7 @@ example('@promise @object if `resolve` callback, dispatches next tick if resolve
   })
 })
 
-example('@promise @function if `reject` callback, dispatches next tick if rejected with payload', function (check) {
+example('@walk @function if `reject` callback, dispatches next tick if rejected with payload', function (check) {
   var payload = { key: 'value' }
   var action = withPromise(someAction())(selfReject(payload))
   var dispatch = stub()
@@ -176,7 +176,7 @@ example('@promise @function if `reject` callback, dispatches next tick if reject
   })
 })
 
-example('@promise @object if `reject` callback, dispatches next tick if rejected with payload', function (check) {
+example('@walk @object if `reject` callback, dispatches next tick if rejected with payload', function (check) {
   var payload = { key: 'value' }
   var action = withPromise(someAction())(new Promise(selfReject(payload)))
   var dispatch = stub()

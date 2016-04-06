@@ -9,16 +9,16 @@ module.exports = function (walkCreator) {
 
         findError(walk, action)(action.type)
 
-        if (action.meta && action.meta.promise) {
+        if (action.meta && action.meta.walk) {
           var resolve = dispatchWith(walk.resolve)
           var reject = dispatchWith(walk.reject)
 
-          if (typeof action.meta.promise === 'function') {
+          if (typeof action.meta.walk === 'function') {
             setTimeout(function () {
-              action.meta.promise(resolve, reject)
+              action.meta.walk(resolve, reject)
             })
           } else {
-            action.meta.promise.then(resolve)['catch'](reject)
+            action.meta.walk.then(resolve)['catch'](reject)
           }
         } else if (walk) {
           setTimeout(function () {
@@ -49,7 +49,7 @@ var error = {
 }
 
 function findError (walk, action) {
-  if (action.meta && action.meta.promise) {
+  if (action.meta && action.meta.walk) {
     if (!walk) {
       return error.promise.noWalk
     }
