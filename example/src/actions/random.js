@@ -4,7 +4,7 @@ export const randomNumberInRandomTime = () => {
     type: 'RANDOM_NUMBER_IN_RANDOM_TIME',
     payload: numberOfMilliseconds,
     meta: {
-      walk: (resolve, reject) => setTimeout(() => resolve(numberOfMilliseconds), numberOfMilliseconds)
+      walk: (done) => setTimeout(() => done(null, numberOfMilliseconds), numberOfMilliseconds)
     }
   }
 }

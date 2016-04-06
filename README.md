@@ -36,7 +36,7 @@ The key concepts are:
   - `resolve`, a reference to an action creator to be executed whenever the promise in the action is successful.
   - `reject`, a reference to an action creator to be executed whenever the promise in the action is rejected.
 
-Let's say that you want to perform an asynchronous operation when firing `RANDOM_NUMBER_IN_RANDOM_TIME`. We need to add a promise to that action when we create it:
+Let's say that you want to perform an asynchronous operation when firing `RANDOM_NUMBER_IN_RANDOM_TIME`. We need to add a _walk_ function to the `meta` of that action when we create it. That function will take a `done` callback as an argument. Invoking the `done` callback with a non-null first argument indicates error, so we invoke it passing the `numberOfMilliseconds` as the second argument:
 
 
 ```js
@@ -46,7 +46,7 @@ export const randomNumberInRandomTime = function () {
     type: 'RANDOM_NUMBER_IN_RANDOM_TIME',
     payload: numberOfMilliseconds,
     meta: {
-      walk: (resolve, reject) => setTimeout(() => resolve(numberOfMilliseconds), numberOfMilliseconds)
+      walk: (done) => setTimeout(() => done(null, numberOfMilliseconds), numberOfMilliseconds)
     }
   }
 }
@@ -57,7 +57,7 @@ export const randomNumberInRandomTimeReceived = (payload) => ({
 })
 ```
 
-Then we need to specify a walk for the `RANDOM_NUMBER_IN_RANDOM_TIME` action. The walk should provide an action creator to be called when the promise is resolved. This is how the walk creator in the example looks like:
+Then we need to specify a walk for the `RANDOM_NUMBER_IN_RANDOM_TIME` action. The walk should provide an action creator to be called when the walk is run. This is how the walk creator in the example looks like:
 
 ```js
 import * as RandomActions from '../actions/random'
@@ -94,7 +94,7 @@ export default function configureStore () {
 
 ### Chaining actions together
 
-In case that you just want to chain the execution of two actions, you can skip setting a promise in the action. You will have to provide a walk that has only one target action creator instead of a resolve/reject pair. The middleware will then call the target action creator with the original payload and dispatch the resulting action.
+In case that you just want to chain the execution of two actions, you can skip setting a walk in the action. You will have to provide a walk that has only one target action creator instead of a resolve/reject pair. The middleware will then call the target action creator with the original payload and dispatch the resulting action.
 
 Let's say that once the random number callback is received, we want to show a congratulations to the user, but only if the timeout happened in less than two seconds. We know that the payload is the number of milliseconds that took the setTimeout to be executed. We can write it like this:
 
@@ -158,15 +158,15 @@ export const randomHalfTimesItWorks = () => {
 
 ## Further justification
 
-Besides the walks themselves and the `meta.promise` idiom in the action, which do not affect anything outside them in the architecture, the Walk approach introduces no artifacts in your code:
+Besides the walks and the `meta.walk` idiom in the action, the Walk approach introduces no artifacts in your code:
 
 - No weird `status` properties like in [`redux-promise`](https://www.npmjs.com/package/redux-promise).
 - Actions creators are still returning actions, unlike in [`redux-thunk`](https://www.npmjs.com/package/redux-thunk).
-- It's super flexible. Plug whatever you want in the promise.
+- It's super flexible. Plug whatever you want in the walk function.
 
 And the icing on the cake: you don't need to learn anything to use them! Walk creators are just pure functions, like reducers and action creators before them.
 
-Another consideration when designing redux-walk was to keep the actions as actions, and treat the promises as metadata. In `redux-promise`, the promise is provided in the action as part of the payload, because the action is not considered done until the promise is completed; but in practice this leads to some weirdness when the action should be dispatched immediately with a payload to be used in a reducer–for example for optimistic update of the state–because then the payload as returned by the action creator will not be the one actually dispatched, since the `redux-promise` middleware will modify it.
+Another consideration when designing redux-walk was to keep the actions having plain object structures in the payload, and have the walks as metadata. In `redux-promise`, the promise is provided as part of the payload, because the action is not considered done until the promise is completed; but in practice this leads to some weirdness when the action should be dispatched immediately with a payload to be used in a reducer–for example for optimistic update of the state–because then the payload as returned by the action creator will not be the one actually dispatched, since the `redux-promise` middleware will modify it.
 
 The philosophy behind `redux-walk` is that the type signature of the action creator should consistent with the actual action being passed around. This is important as a design good practice (we strive to be more functional, don't we?) but also to keep the cognitive load down: the whole point of the action creators being exposed in an ordered manner is to have canonical descriptions of the possible events that the application is capable or reacting to.
 
