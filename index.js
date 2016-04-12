@@ -1,24 +1,39 @@
 module.exports = function (walkCreator) {
   return function (context) {
     var dispatch = context.dispatch
+    var getState = context.getState
 
     return function (next) {
       return function (action) {
         var walk = walkCreator(action)
         var dispatchWith = dispatcher(dispatch)(walk)
 
-        findError(walk, action)(action.type)
+        if (action.meta && action.meta.walk && !walk) {
+          throw new Error('Found walk in \'' + action.type + '\' but there is no walk for it')
+        }
 
-        if (action.meta && action.meta.promise) {
-          var resolve = dispatchWith(walk.resolve)
-          var reject = dispatchWith(walk.reject)
+        var state = getState()
 
-          if (typeof action.meta.promise === 'function') {
+        var boundWalk = {}
+
+        for (var key in walk) {
+          if (walk.hasOwnProperty(key)) {
+            // TODO: Add the validation for this to be action creators (or at least, functions)
+            boundWalk[key] = dispatchWith(walk[key])
+          }
+        }
+
+        if (action.meta && action.meta.walk) {
+          if (typeof action.meta.walk === 'function') {
             setTimeout(function () {
-              action.meta.promise(resolve, reject)
+              action.meta.walk({ prevState: state, getState: getState })(boundWalk)
             })
           } else {
-            action.meta.promise.then(resolve)['catch'](reject)
+            // TODO: Deal with this
+            // This should die
+            var resolve = dispatchWith(walk.resolve)
+            var reject = dispatchWith(walk.reject)
+            action.meta.walk(state, getState).then(resolve)['catch'](reject)
           }
         } else if (walk) {
           setTimeout(function () {
@@ -30,38 +45,6 @@ module.exports = function (walkCreator) {
       }
     }
   }
-}
-
-var error = {
-  promise: {
-    noWalk: function (type) {
-      throw new Error('Found promise in \'' + type + '\' but there is no walk for it')
-    },
-    missingCallback: function (type) {
-      throw new Error('The walk for \'' + type + '\' needs to be a callback, or to have a `resolve` or/and `reject` callback when there is a promise in it')
-    }
-  },
-  direct: {
-    walkIsNotFunction: function (type) {
-      throw new Error('Expected function as target in walk for action \'' + type + '\'')
-    }
-  }
-}
-
-function findError (walk, action) {
-  if (action.meta && action.meta.promise) {
-    if (!walk) {
-      return error.promise.noWalk
-    }
-
-    if (typeof walk !== 'function' && walk.resolve == null && walk.reject == null) {
-      return error.promise.missingCallback
-    }
-  } else if (walk && typeof walk !== 'function') {
-    return error.direct.walkIsNotFunction
-  }
-
-  return function () {}
 }
 
 function dispatcher (dispatch) {
