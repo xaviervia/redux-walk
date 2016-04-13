@@ -1,62 +1,52 @@
 module.exports = function (walkCreator) {
   return function (context) {
-    var dispatch = context.dispatch
-    var getState = context.getState
-
     return function (next) {
       return function (action) {
-        var walk = walkCreator(action)
-        var dispatchWith = dispatcher(dispatch)(walk)
-
-        if (action.meta && action.meta.walk && !walk) {
-          throw new Error('Found walk in \'' + action.type + '\' but there is no walk for it')
-        }
-
-        var state = getState()
-
-        var boundWalk = {}
-
-        for (var key in walk) {
-          if (walk.hasOwnProperty(key)) {
-            // TODO: Add the validation for this to be action creators (or at least, functions)
-            boundWalk[key] = dispatchWith(walk[key])
-          }
-        }
-
         if (action.meta && action.meta.walk) {
-          if (typeof action.meta.walk === 'function') {
-            setTimeout(function () {
-              action.meta.walk({ prevState: state, getState: getState })(boundWalk)
-            })
-          } else {
-            // TODO: Deal with this
-            // This should die
-            var resolve = dispatchWith(walk.resolve)
-            var reject = dispatchWith(walk.reject)
-            action.meta.walk(state, getState).then(resolve)['catch'](reject)
+          if (typeof action.meta.walk !== 'function') {
+            throw new TypeError('meta.walk property in action `' + action.type + '` needs to be a function')
           }
-        } else if (walk) {
-          setTimeout(function () {
-            dispatchWith()(action.payload)
-          })
+
+          var walk = walkCreator(action)
+
+          if (walk == null) {
+            throw new Error('There is no corresponding walk for action `' + action.type + '`')
+          }
+
+          if (!(walk instanceof Object)) {
+            throw new TypeError('The walk for `' + action.type + '` must be an object')
+          }
+
+          var partiallyAppliedMetaWalk = action.meta.walk(context.getState(), context.getState)
+
+          if (typeof partiallyAppliedMetaWalk !== 'function') {
+            throw new TypeError('The meta.walk in action `' + action.type + '` must return a function')
+          }
+
+          var boundWalk = {}
+          for (var key in walk) {
+            if (walk.hasOwnProperty(key)) {
+              if (typeof walk[key] !== 'function') {
+                throw new TypeError('Expected callback `' + key + '` of the walk for `' + action.type + '` to be a function')
+              }
+
+              boundWalk[key] = function () {
+                var args = []
+
+                for (var i = 0; i < arguments.length; i++) {
+                  args.push(arguments[i])
+                }
+
+                context.dispatch(walk[key].apply(null, args))
+              }
+            }
+          }
+
+          partiallyAppliedMetaWalk(boundWalk)
         }
 
         next(action)
       }
-    }
-  }
-}
-
-function dispatcher (dispatch) {
-  return function (walk) {
-    var fallbackWalk = typeof walk === 'function'
-      ? function (payload) { dispatch(walk(payload)) }
-      : function () {}
-
-    return function (preferredWalk) {
-      return typeof preferredWalk === 'function'
-        ? function (payload) { dispatch(preferredWalk(payload)) }
-        : fallbackWalk
     }
   }
 }
