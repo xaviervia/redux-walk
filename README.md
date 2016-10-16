@@ -3,6 +3,8 @@
 [![Travis CI build
 status](https://api.travis-ci.org/xaviervia/redux-walk.svg)](https://travis-ci.org/xaviervia/redux-walk)
 
+### Note: I've seen moved away from this approach. I'm doing something closer to [redux-haiku](https://github.com/xaviervia/redux-haiku) now, leveraging plain subscribers. Either way, this package should be considered deprecated: the problem it was addressing was an artifact of misusing [`combineReducers`](redux.js.org/docs/api/combineReducers.html)
+
 An async extension for Redux that keeps you functional
 
 ## Install
